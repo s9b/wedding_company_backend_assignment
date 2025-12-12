@@ -1,6 +1,5 @@
 # Organization Management Backend
 
-![CI](https://github.com/s9b/wedding_company_backend_assignment/actions/workflows/ci.yml/badge.svg)
 
 ## Table of Contents
 - System Overview
