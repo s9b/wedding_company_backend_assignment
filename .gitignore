@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+.env.*
+mongo-data/
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd='mongo --eval "db.adminCommand(\"ping\")"' \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: FastAPI import check
+        run: python -c "import fastapi; print(fastapi.__version__)"
+
+      - name: Lint (ruff)
+        working-directory: backend
+        run: |
+          ruff check .
+
+      - name: Run tests
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MASTER_DB: ci_master_db
+          JWT_SECRET: test-secret
+          ENV: ci
+        working-directory: backend
+        run: |
+          pytest -q

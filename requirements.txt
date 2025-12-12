@@ -1,0 +1,26 @@
+# FastAPI framework
+fastapi==0.104.1
+
+# ASGI server for local/dev runs
+uvicorn==0.23.2
+
+# Async MongoDB driver (Motor) and base driver (PyMongo)
+motor==3.3.1
+pymongo==4.5.0
+
+# JWT and bcrypt for authentication
+python-jose[jwt]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Environment variable loading
+python-dotenv==1.0.0
+
+# Testing stack
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Pydantic settings (env-driven configuration)
+pydantic-settings==2.0.3
+
+# Optional: used by EmailStr in Pydantic models
+email-validator==2.1.0
