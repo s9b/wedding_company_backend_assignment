@@ -1,7 +1,7 @@
 import pytest
 
-from ..app.routers.orgs import sanitize_org_name
-from ..scripts.migrate_org_name import sanitize_name as script_sanitize_name
+from app.routers.orgs import sanitize_org_name
+from scripts.migrate_org_name import sanitize_name as script_sanitize_name
 
 
 @pytest.mark.parametrize(

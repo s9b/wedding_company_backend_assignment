@@ -1,6 +1,6 @@
 import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
-from ..scripts.migrate_org_name import migrate_org_name, sanitize_name
+from scripts.migrate_org_name import migrate_org_name, sanitize_name
 
 
 @pytest.mark.asyncio

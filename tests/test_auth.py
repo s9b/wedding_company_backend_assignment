@@ -1,8 +1,8 @@
 import pytest
 from datetime import timedelta
 
-from ..app.auth import hash_password, verify_password, create_jwt, decode_jwt
-from ..app.config import settings
+from app.auth import hash_password, verify_password, create_jwt, decode_jwt
+from app.config import settings
 
 
 def test_bcrypt_hash_and_verify():

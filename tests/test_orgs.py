@@ -1,10 +1,10 @@
 import pytest
 from httpx import AsyncClient
-from ..app.main import app
-from ..app.db import db_client, get_tenant_db
-from ..app.config import settings
-from ..app.auth import hash_password
-from ..app.routers.orgs import sanitize_org_name
+from app.main import app
+from app.db import db_client, get_tenant_db
+from app.config import settings
+from app.auth import hash_password
+from app.routers.orgs import sanitize_org_name
 
 # Use a test database
 TEST_MASTER_DB = "test_master_db"
