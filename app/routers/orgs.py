@@ -31,7 +31,9 @@ async def get_current_admin_email(token: str = Depends(oauth2_scheme)) -> str:
         )
     return email
 
-@router.post("/org/create", response_model=OrganizationResponse, status_code=status.HTTP_201_CREATED)
+# Final paths are `/org/create`, `/org/get`, `/org/delete` via router prefix.
+# Avoid duplicating `/org` in decorators.
+@router.post("/create", response_model=OrganizationResponse, status_code=status.HTTP_201_CREATED)
 async def create_organization(org_create: OrganizationCreate):
     org_name_lower = sanitize_org_name(org_create.organization_name)
     
@@ -89,7 +91,7 @@ async def create_organization(org_create: OrganizationCreate):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create organization: {e}")
 
 
-@router.get("/org/get", response_model=OrganizationResponse)
+@router.get("/get", response_model=OrganizationResponse)
 async def get_organization(organization_name: str):
     org_name_lower = sanitize_org_name(organization_name)
     orgs_collection = db_client.get_master_db().organizations
@@ -106,7 +108,7 @@ async def get_organization(organization_name: str):
     )
 
 
-@router.delete("/org/delete", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/delete", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_organization(organization_name: str, admin_email: str = Depends(get_current_admin_email)):
     org_name_lower = sanitize_org_name(organization_name)
     orgs_collection = db_client.get_master_db().organizations
@@ -128,3 +130,49 @@ async def delete_organization(organization_name: str, admin_email: str = Depends
     await db_client.client.drop_database(f"org_{org_name_lower}")
 
     return
+
+
+class OrganizationUpdatePayload(OrganizationCreate):
+    """Request payload for organization rename.
+    Why: keep validation consistent with creation while providing a new name field.
+    """
+    new_name: str
+
+@router.put("/update", response_model=OrganizationResponse)
+async def update_organization(payload: OrganizationUpdatePayload, admin_email: str = Depends(get_current_admin_email)):
+    """Rename an organization in the master DB.
+
+    Note: This does not move tenant data. Use `scripts/migrate_org_name.py` to copy
+    data to the new tenant database name, then update application config.
+    """
+    old_lower = sanitize_org_name(payload.organization_name)
+    new_lower = sanitize_org_name(payload.new_name)
+
+    orgs_collection = db_client.get_master_db().organizations
+
+    # Validate target name is available
+    if await orgs_collection.find_one({"organization_name_lower": new_lower}):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="New organization name already exists.")
+
+    # Fetch existing org
+    existing = await orgs_collection.find_one({"organization_name_lower": old_lower})
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found.")
+
+    org_in_db = OrganizationInDB(**existing)
+
+    # Authorization: only the org's admin may rename
+    if org_in_db.admin_email != admin_email:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this organization.")
+
+    # Update master metadata only; tenant DB migration is a separate step.
+    await orgs_collection.update_one(
+        {"_id": org_in_db.id},
+        {"$set": {"organization_name": payload.new_name, "organization_name_lower": new_lower}}
+    )
+
+    return OrganizationResponse(
+        organization_name=payload.new_name,
+        admin_email=org_in_db.admin_email,
+        created_at=org_in_db.created_at.isoformat(),
+    )

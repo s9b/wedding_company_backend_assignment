@@ -14,7 +14,7 @@ This document lists implemented security measures and realistic guidance for pro
 
 - JWT
   - HS256-signed tokens via `python-jose`.
-  - Claims include `sub` (admin email) and `exp` (expiration).
+  - Claims include `sub` (admin email), `org_id` (organization identifier), and `exp` (expiration).
   - Expiration configurable via `settings.JWT_EXP_SECONDS`.
 
 - Authorization

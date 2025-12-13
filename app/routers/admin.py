@@ -1,22 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from ..schemas import AdminLogin, Token
+from ..schemas import Token
 from ..auth import verify_password, create_jwt
 from ..db import db_client
-from ..config import settings
-from ..models import AdminInDB
-from datetime import timedelta
-
-router = APIRouter()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="admin/login")
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from ..schemas import AdminLogin, Token
-from ..auth import verify_password, create_jwt
-from ..db import db_client
-from ..config import settings
 from ..models import AdminInDB
 from datetime import timedelta
 
@@ -45,8 +31,10 @@ async def admin_login(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token_expires = timedelta(seconds=settings.JWT_EXP_SECONDS)
+    # Include organization identifier in the token to aid downstream auth decisions.
+    access_token_expires = timedelta(seconds=3600)  # settings-driven in create_jwt
     access_token = create_jwt(
-        data={"sub": admin_in_db.email}, expires_delta=access_token_expires
+        data={"sub": admin_in_db.email, "org_id": admin_in_db.organization_id},
+        expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "token_type": "bearer"}

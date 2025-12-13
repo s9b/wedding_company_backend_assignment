@@ -35,13 +35,13 @@ This document explains how to run, review, and evaluate the backend project. It 
 
 - Admin login via `POST /admin/login` using form data: `username=<email>`, `password=<password>`.
 - On success, returns `{ access_token, token_type }`.
-- JWT includes `sub` (admin email) and `exp`. Signature is HS256 using `JWT_SECRET`.
+- JWT includes `sub` (admin email), `org_id` (organization identifier), and `exp`. Signature is HS256 using `JWT_SECRET`.
 - Protected operations (e.g., `DELETE /org/delete`) require `Authorization: Bearer <token>`.
   - The email in `sub` must match the organization’s admin to authorize deletion.
 
 ## Known Constraints
 
-- JWT does not currently include the org collection name.
+- JWT carries an organization identifier (`org_id`). Tokens do not embed the tenant database name.
 - Rollback during org creation cleans master DB records, but tenant DB cleanup may require manual steps.
 - Multi-document transactions across master and tenant DBs are not implemented.
 
@@ -54,6 +54,6 @@ This document explains how to run, review, and evaluate the backend project. It 
 
 ## Review Tips
 
-- Verify sanitization rules (`sanitize_org_name`) for DB naming.
+- Verify sanitization rules (`sanitize_org_name`) for tenant database naming.
 - Confirm admin-only delete logic checks bearer token email.
 - Inspect tests under `backend/tests/` for endpoint, auth, and migration coverage.

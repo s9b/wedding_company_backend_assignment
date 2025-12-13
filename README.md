@@ -14,7 +14,7 @@
 - Migration Script
 - License
 
-Production-grade FastAPI backend implementing secure Organization CRUD with per-organization tenant databases in MongoDB. The system uses a master database for metadata and admin credentials, bcrypt for password hashing, and JWT for admin authentication. A migration script supports safe renaming of tenant databases.
+FastAPI backend implementing Organization CRUD with per-organization tenant databases in MongoDB. The system uses a master database for metadata and admin credentials, bcrypt for password hashing, and JWT for admin authentication. A migration script supports safe renaming of tenant databases.
 
 ## System Overview
 - Master database stores `organizations` and `admins` collections.
@@ -26,7 +26,7 @@ Production-grade FastAPI backend implementing secure Organization CRUD with per-
 - FastAPI app exposes routes under `/admin` and `/org`.
 - Motor (`AsyncIOMotorClient`) provides async MongoDB access.
 - `app/` modules separate configuration, DB client, models, schemas, routers, and auth helpers.
-- Tenant DB naming is `org_<sanitize_org_name(name)>` where sanitization lowercases, replaces spaces with `_`, and removes non-alphanumeric `_`.
+- Tenant database naming is `org_<sanitize_org_name(name)>` where sanitization lowercases, replaces spaces with `_`, and removes non-alphanumeric `_`.
 
 ## Tech Stack
 - `FastAPI` for the HTTP API
@@ -99,6 +99,30 @@ Production-grade FastAPI backend implementing secure Organization CRUD with per-
   - Deletes org and admin from master DB and drops the tenant DB.
   - Response: `204 No Content`.
 
+- `PUT /org/update`
+  - JSON body:
+    ```json
+    {
+      "organization_name": "Acme Corp",
+      "email": "owner@acme.com",
+      "password": "strongpassword123",
+      "new_name": "Acme International"
+    }
+    ```
+  - Behavior:
+    - Requires admin token; only the org’s admin can rename.
+    - Validates the new name does not already exist.
+    - Updates the master metadata (`organization_name`, `organization_name_lower`).
+    - Does not move tenant data. Use `scripts/migrate_org_name.py` to copy data to the new tenant database name, then update config.
+  - Response example:
+    ```json
+    {
+      "organization_name": "Acme International",
+      "admin_email": "owner@acme.com",
+      "created_at": "2024-01-01T12:00:00Z"
+    }
+    ```
+
 ## Local Development
 
 ### Environment Setup
@@ -135,13 +159,13 @@ Ensure `MONGO_URI` in `.env` points to your local MongoDB.
 ## Security Considerations
 - Input sanitization: `sanitize_org_name` enforces lowercase, underscores, and alphanumerics.
 - Passwords hashed via bcrypt using `passlib`.
-- JWT has expiration (`exp`) and carries `sub` email claim; signature HS256.
+- JWT has expiration (`exp`) and carries `sub` email claim and `org_id` identifier; signature HS256.
 - Admin-only deletion: token is validated; email in token must match org admin.
 - Database isolation: per-org tenant databases prevent cross-tenant reads by design.
 - Rollback: on partial failures during creation, master records are cleaned up; tenant DB cleanup is documented for manual handling.
 
 ## Limitations & Future Improvements
-- JWT currently does not include the org collection name; consider adding an org claim and scoping tokens per tenant.
+- Tokens include `org_id`; they do not embed the tenant database name.
 - Transactional creation across master and tenant DBs is limited; consider using multi-document transactions if using Mongo replica sets.
 - Tenant DB cleanup on rollback is manual; add safe automation.
 - Admin roles are minimal; introduce role-based access control.

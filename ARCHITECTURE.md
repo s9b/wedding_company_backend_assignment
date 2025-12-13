@@ -17,7 +17,7 @@ backend/
       admin.py       # Admin login endpoint
       orgs.py        # Organization CRUD endpoints
   scripts/
-    migrate_org_name.py # Safe copy-based tenant DB rename
+    migrate_org_name.py # Copy-based tenant DB rename (manual cutover)
   tests/             # pytest test suite
   Dockerfile         # FastAPI app container
   docker-compose.yml # App + Mongo for local dev
@@ -92,7 +92,7 @@ Protected routes use OAuth2PasswordBearer to decode and validate token.
 - Per-tenant database isolation to simplify data boundaries.
 - Sanitization rules are simple, predictable, and enforced consistently.
 - Master DB stores minimal metadata for easy administration.
-- JWT carries only admin email for explicit authorization checks; future improvement is to include org claims for tighter scoping.
+- JWT carries admin email and an organization identifier (`org_id`) for clearer downstream authorization.
 
 ## Diagram (ASCII)
 
@@ -121,4 +121,16 @@ Protected routes use OAuth2PasswordBearer to decode and validate token.
         |  master   | <--------+  org_<name>
         | orgs/admin|             tenant_metadata
         +-----------+             (per org)
+```
+### Example: Update Organization (Rename)
+
+```
+PUT /org/update
+  -> decode JWT -> get admin email
+  -> find org in master by sanitized current name
+  -> verify admin owns the org
+  -> validate new name is available
+  -> update master metadata (name + lower)
+  -> respond with updated org
+  Note: tenant data is not moved by this endpoint. Use migration script.
 ```

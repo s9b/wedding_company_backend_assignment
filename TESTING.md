@@ -21,7 +21,7 @@ This project uses `pytest` with `pytest-asyncio` for async endpoint and helper t
 ## Test Database Configuration
 - Tests use `settings.MONGO_URI` pointing to a local MongoDB (e.g., `mongodb://localhost:27017`).
 - The test suite sets `settings.MASTER_DB` to a separate test DB to avoid interfering with development data.
-- When running in CI, a MongoDB service runs and tests connect via `mongodb://localhost:27017`.
+- When running in CI, a MongoDB service runs and tests connect via `mongodb://localhost:27017`. Required env vars are provided in the workflow.
 
 ## Notes
 - Tests avoid destructive operations wherever possible. The migration test validates copying behavior and presence of source/target DBs without dropping data.
