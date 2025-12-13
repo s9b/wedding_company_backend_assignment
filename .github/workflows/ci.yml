@@ -40,7 +40,6 @@ jobs:
           MONGO_URI: mongodb://localhost:27017
           MASTER_DB: test_master_db
           JWT_SECRET: test_jwt_secret
-          ENV: ci
+          ENV: development
         run: |
           pytest -q
-
