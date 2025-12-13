@@ -59,7 +59,7 @@ POST /org/create
 ```
 DELETE /org/delete
   -> decode JWT -> get admin email
-  -> find org in master by sanitized name
+  -> find org in master by sanitised name
   -> compare token email to org.admin_email
   -> delete org + admin from master
   -> drop tenant DB
