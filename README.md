@@ -20,7 +20,7 @@ FastAPI backend implementing Organization CRUD with per-organization tenant data
 - Master database stores `organizations` and `admins` collections.
 - Each organization has an isolated tenant database named `org_<sanitized_name>` containing `tenant_metadata`.
 - Admin login returns a JWT used for protected operations (e.g., org deletion). The token currently includes the `sub` (admin email) and `exp` claim.
-- Organization creation enforces uniqueness on sanitized names and initializes tenant metadata, with a rollback on failure.
+- Organization creation enforces uniqueness on sanitised names and initialises tenant metadata, with a rollback on failure.
 
 ## Architecture
 - FastAPI app exposes routes under `/admin` and `/org`.
